@@ -103,7 +103,7 @@ function PanoramaViewer({ imageUrl, fov, resetSignal, onFovChange }: PanoramaVie
     (stage as HTMLDivElement & { activateMotion?: () => Promise<void>; deactivateMotion?: () => void }).activateMotion = activateMotion;
     (stage as HTMLDivElement & { activateMotion?: () => Promise<void>; deactivateMotion?: () => void }).deactivateMotion = deactivateMotion;
 
-    const material = new THREE.MeshBasicMaterial({ color: 0x182638, side: THREE.BackSide });
+    const material = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.BackSide });
     materialRef.current = material;
     const panorama = new THREE.Mesh(new THREE.SphereGeometry(100, 64, 40), material);
     scene.add(panorama);
@@ -382,7 +382,7 @@ function App() {
                 Resetar visão
               </button>
               <button type="button" className="primary-button" onClick={handleTimeTravel}>
-                {period === 'current' ? 'Voltar no tempo — 1930' : 'Retornar ao presente'}
+                {period === 'current' ? 'Voltar no tempo — 1970' : 'Retornar ao presente'}
               </button>
             </div>
           </div>
@@ -403,7 +403,7 @@ function App() {
             {isTransitioning && (
               <div className="time-transition">
                 <div className="portal-shell">
-                  <span>{period === 'current' ? '1930' : '2026'}</span>
+                  <span>{period === 'current' ? '1970' : '2026'}</span>
                 </div>
               </div>
             )}
