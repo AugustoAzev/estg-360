@@ -4,25 +4,22 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 import { locations, type Period } from './data/locations';
 
-const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
-
 type PanoramaViewerProps = {
   imageUrl: string;
   fov: number;
   resetSignal: number;
-  onFovChange: (nextFov: number) => void;
 };
 
 type DeviceOrientationEventWithPermission = typeof DeviceOrientationEvent & {
   requestPermission?: () => Promise<'granted' | 'denied'>;
 };
 
-function PanoramaViewer({ imageUrl, fov, resetSignal, onFovChange }: PanoramaViewerProps) {
+function PanoramaViewer({ imageUrl, fov, resetSignal }: PanoramaViewerProps) {
   const stageRef = useRef<HTMLDivElement>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const materialRef = useRef<THREE.MeshBasicMaterial | null>(null);
-  const fovRef = useRef(fov);
+  const photoPlaneRef = useRef<THREE.Mesh | null>(null);
   const [textureState, setTextureState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [motionEnabled, setMotionEnabled] = useState(false);
   const [motionMessage, setMotionMessage] = useState('');
@@ -32,8 +29,9 @@ function PanoramaViewer({ imageUrl, fov, resetSignal, onFovChange }: PanoramaVie
     if (!stage) return;
 
     const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0d0b09);
     const camera = new THREE.PerspectiveCamera(fov, 1, 0.1, 200);
-    camera.position.set(0, 0, 0.01);
+    camera.position.set(0, 2.1, 2.8);
     cameraRef.current = camera;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -42,7 +40,7 @@ function PanoramaViewer({ imageUrl, fov, resetSignal, onFovChange }: PanoramaVie
     renderer.xr.enabled = true;
     renderer.xr.setReferenceSpaceType('local');
     renderer.domElement.className = 'panorama-canvas';
-    renderer.domElement.setAttribute('aria-label', 'Visualizador panorâmico 360 graus');
+    renderer.domElement.setAttribute('aria-label', 'Sala histórica imersiva em 2.5D');
     stage.appendChild(renderer.domElement);
 
     const vrButton = VRButton.createButton(renderer);
@@ -52,10 +50,12 @@ function PanoramaViewer({ imageUrl, fov, resetSignal, onFovChange }: PanoramaVie
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.enableZoom = false;
-    controls.rotateSpeed = -0.25;
-    controls.minPolarAngle = 0.35;
-    controls.maxPolarAngle = Math.PI - 0.35;
-    controls.target.set(0, 0, -1);
+    controls.rotateSpeed = -0.18;
+    controls.minAzimuthAngle = -0.65;
+    controls.maxAzimuthAngle = 0.65;
+    controls.minPolarAngle = 1.15;
+    controls.maxPolarAngle = 1.95;
+    controls.target.set(0, 2, -4.2);
     controls.update();
     controls.saveState();
     controlsRef.current = controls;
@@ -103,10 +103,37 @@ function PanoramaViewer({ imageUrl, fov, resetSignal, onFovChange }: PanoramaVie
     (stage as HTMLDivElement & { activateMotion?: () => Promise<void>; deactivateMotion?: () => void }).activateMotion = activateMotion;
     (stage as HTMLDivElement & { activateMotion?: () => Promise<void>; deactivateMotion?: () => void }).deactivateMotion = deactivateMotion;
 
-    const material = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.BackSide });
-    materialRef.current = material;
-    const panorama = new THREE.Mesh(new THREE.SphereGeometry(100, 64, 40), material);
-    scene.add(panorama);
+    const roomWidth = 18;
+    const roomHeight = 8;
+    const roomDepth = 12;
+    const roomMaterials = {
+      wall: new THREE.MeshBasicMaterial({ color: 0x756552, side: THREE.DoubleSide }),
+      sideWall: new THREE.MeshBasicMaterial({ color: 0x55493c, side: THREE.DoubleSide }),
+      floor: new THREE.MeshBasicMaterial({ color: 0x30271f, side: THREE.DoubleSide }),
+      ceiling: new THREE.MeshBasicMaterial({ color: 0x8a785f, side: THREE.DoubleSide })
+    };
+    const roomMeshes: THREE.Mesh[] = [];
+    const addRoomPlane = (geometry: THREE.PlaneGeometry, material: THREE.MeshBasicMaterial, position: THREE.Vector3, rotation: THREE.Euler) => {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.copy(position);
+      mesh.rotation.copy(rotation);
+      scene.add(mesh);
+      roomMeshes.push(mesh);
+      return mesh;
+    };
+
+    addRoomPlane(new THREE.PlaneGeometry(roomWidth, roomHeight), roomMaterials.wall, new THREE.Vector3(0, roomHeight / 2, -roomDepth / 2), new THREE.Euler());
+    addRoomPlane(new THREE.PlaneGeometry(roomDepth, roomHeight), roomMaterials.sideWall, new THREE.Vector3(-roomWidth / 2, roomHeight / 2, 0), new THREE.Euler(0, Math.PI / 2, 0));
+    addRoomPlane(new THREE.PlaneGeometry(roomDepth, roomHeight), roomMaterials.sideWall, new THREE.Vector3(roomWidth / 2, roomHeight / 2, 0), new THREE.Euler(0, Math.PI / 2, 0));
+    addRoomPlane(new THREE.PlaneGeometry(roomWidth, roomDepth), roomMaterials.floor, new THREE.Vector3(0, 0, 0), new THREE.Euler(-Math.PI / 2, 0, 0));
+    addRoomPlane(new THREE.PlaneGeometry(roomWidth, roomDepth), roomMaterials.ceiling, new THREE.Vector3(0, roomHeight, 0), new THREE.Euler(Math.PI / 2, 0, 0));
+
+    const photoMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+    materialRef.current = photoMaterial;
+    const photoPlane = new THREE.Mesh(new THREE.PlaneGeometry(16, 7.2), photoMaterial);
+    photoPlane.position.set(0, 3.9, -roomDepth / 2 + 0.02);
+    scene.add(photoPlane);
+    photoPlaneRef.current = photoPlane;
 
     const resize = () => {
       const width = stage.clientWidth;
@@ -121,12 +148,6 @@ function PanoramaViewer({ imageUrl, fov, resetSignal, onFovChange }: PanoramaVie
     resizeObserver.observe(stage);
     resize();
 
-    const handleWheel = (event: WheelEvent) => {
-      event.preventDefault();
-      onFovChange(clamp(fovRef.current + (event.deltaY > 0 ? 6 : -6), 55, 105));
-    };
-    renderer.domElement.addEventListener('wheel', handleWheel, { passive: false });
-
     renderer.setAnimationLoop(() => {
       controls.update();
       renderer.render(scene, camera);
@@ -134,24 +155,25 @@ function PanoramaViewer({ imageUrl, fov, resetSignal, onFovChange }: PanoramaVie
 
     return () => {
       renderer.setAnimationLoop(null);
-      renderer.domElement.removeEventListener('wheel', handleWheel);
       deactivateMotion();
       resizeObserver.disconnect();
       controls.dispose();
-      panorama.geometry.dispose();
-      material.map?.dispose();
-      material.dispose();
+      roomMeshes.forEach((mesh) => mesh.geometry.dispose());
+      Object.values(roomMaterials).forEach((material) => material.dispose());
+      photoPlane.geometry.dispose();
+      photoMaterial.map?.dispose();
+      photoMaterial.dispose();
       renderer.dispose();
       vrButton.remove();
       renderer.domElement.remove();
       cameraRef.current = null;
       controlsRef.current = null;
       materialRef.current = null;
+      photoPlaneRef.current = null;
     };
   }, []);
 
   useEffect(() => {
-    fovRef.current = fov;
     const camera = cameraRef.current;
     if (!camera) return;
     camera.fov = fov;
@@ -181,6 +203,14 @@ function PanoramaViewer({ imageUrl, fov, resetSignal, onFovChange }: PanoramaVie
         texture.colorSpace = THREE.SRGBColorSpace;
         material.map?.dispose();
         material.map = texture;
+        const imageRatio = texture.image.width / texture.image.height;
+        const photoHeight = 7.2;
+        const photoWidth = Math.min(16.8, Math.max(9, photoHeight * imageRatio));
+        const photoPlane = photoPlaneRef.current;
+        if (photoPlane) {
+          photoPlane.geometry.dispose();
+          photoPlane.geometry = new THREE.PlaneGeometry(photoWidth, photoHeight);
+        }
         material.needsUpdate = true;
         setTextureState('ready');
       },
@@ -220,7 +250,7 @@ function PanoramaViewer({ imageUrl, fov, resetSignal, onFovChange }: PanoramaVie
 function App() {
   const [selectedId, setSelectedId] = useState(locations[0].id);
   const [period, setPeriod] = useState<Period>('current');
-  const [fov, setFov] = useState(100);
+  const [fov, setFov] = useState(78);
   const [resetSignal, setResetSignal] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
@@ -233,7 +263,7 @@ function App() {
 
   const handleSelectLocation = (id: string) => {
     setSelectedId(id);
-    setFov(100);
+    setFov(78);
     setResetSignal((signal) => signal + 1);
     setPeriod('current');
     setIsTransitioning(false);
@@ -352,7 +382,7 @@ function App() {
               <div>
                 <p className="eyebrow">Computador</p>
                 <h3>Arraste para olhar</h3>
-                <p>Use o mouse para girar a câmera, a roda para aproximar ou afastar e “Resetar visão” para voltar ao início.</p>
+                <p>Arraste suavemente para observar a sala e use “Resetar visão” para voltar ao enquadramento inicial.</p>
               </div>
             </article>
 
@@ -392,7 +422,6 @@ function App() {
               imageUrl={activePanorama.imageUrl}
               fov={fov}
               resetSignal={resetSignal}
-              onFovChange={setFov}
             />
 
             <div className="viewer-overlay" aria-live="polite">
