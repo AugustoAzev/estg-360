@@ -236,6 +236,28 @@ button {
   border-right: 1px solid color-mix(in srgb, var(--map-river) 55%, white);
 }
 
+.map-blocks {
+  position: absolute;
+  inset: 0;
+  opacity: 0.72;
+  transform: rotate(-7deg) scale(1.08);
+}
+
+.block {
+  position: absolute;
+  display: block;
+  border: 1px solid rgba(168, 219, 208, 0.25);
+  background: rgba(44, 91, 95, 0.38);
+  box-shadow: inset 0 0 0 4px rgba(19, 55, 63, 0.28);
+}
+
+.block-one { top: 15%; left: 7%; width: 19%; height: 25%; }
+.block-two { top: 17%; left: 29%; width: 22%; height: 19%; }
+.block-three { top: 44%; left: 8%; width: 25%; height: 29%; }
+.block-four { top: 41%; left: 37%; width: 18%; height: 35%; }
+.block-five { top: 13%; left: 58%; width: 17%; height: 27%; }
+.block-six { top: 47%; left: 62%; width: 25%; height: 24%; }
+
 .map-road {
   position: absolute;
   height: 2px;
@@ -307,6 +329,8 @@ button {
   background: transparent;
   border: 0;
   color: inherit;
+  cursor: pointer;
+  z-index: 2;
 }
 
 .marker-dot {
@@ -353,6 +377,78 @@ button {
 .map-marker.selected .marker-dot {
   box-shadow: 0 0 20px rgba(255, 209, 102, 0.85);
   background: radial-gradient(circle, #fff 0%, #ffe19e 12%, #ffd166 38%, rgba(255, 209, 102, 0.9) 100%);
+}
+
+.marker-preview {
+  position: absolute;
+  left: 50%;
+  top: 10px;
+  display: flex;
+  align-items: stretch;
+  width: min(210px, 56vw);
+  min-height: 76px;
+  transform: translateX(-50%);
+  overflow: hidden;
+  background: rgba(8, 18, 31, 0.96);
+  border: 1px solid rgba(255, 209, 102, 0.42);
+  border-radius: 12px;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.3);
+  text-align: left;
+  cursor: default;
+}
+
+.marker-preview::after {
+  position: absolute;
+  left: 50%;
+  top: -6px;
+  width: 10px;
+  height: 10px;
+  content: '';
+  background: rgba(8, 18, 31, 0.96);
+  border-left: 1px solid rgba(255, 209, 102, 0.42);
+  border-top: 1px solid rgba(255, 209, 102, 0.42);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.marker-preview img {
+  width: 82px;
+  min-height: 76px;
+  object-fit: cover;
+}
+
+.marker-preview-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 11px 10px;
+  background: rgba(8, 18, 31, 0.96);
+}
+
+.marker-preview-content strong {
+  max-width: 92px;
+  color: var(--neutral);
+  font-size: 0.72rem;
+  line-height: 1.25;
+}
+
+.preview-button {
+  border: 1px solid rgba(113, 211, 255, 0.48);
+  border-radius: 7px;
+  padding: 6px 9px;
+  background: rgba(113, 211, 255, 0.14);
+  color: var(--primary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.preview-button:hover,
+.preview-button:focus-visible {
+  background: rgba(113, 211, 255, 0.28);
 }
 
 .viewer-panel {

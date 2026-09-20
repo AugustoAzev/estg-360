@@ -179,6 +179,9 @@ function PanoramaViewer({ imageUrl, fov, resetSignal, onFovChange }: PanoramaVie
           return;
         }
         texture.colorSpace = THREE.SRGBColorSpace;
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.repeat.x = -1;
+        texture.offset.x = 1;
         material.map?.dispose();
         material.map = texture;
         material.needsUpdate = true;
@@ -223,6 +226,8 @@ function App() {
   const [fov, setFov] = useState(100);
   const [resetSignal, setResetSignal] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [mapPreviewId, setMapPreviewId] = useState<string | null>(null);
+  const viewerPanelRef = useRef<HTMLElement>(null);
 
   const selectedLocation = useMemo(
     () => locations.find((location) => location.id === selectedId) ?? locations[0],
@@ -237,6 +242,16 @@ function App() {
     setResetSignal((signal) => signal + 1);
     setPeriod('current');
     setIsTransitioning(false);
+  };
+
+  const handleMapSelect = (id: string) => {
+    handleSelectLocation(id);
+    setMapPreviewId(id);
+  };
+
+  const handleViewLocation = (id: string) => {
+    handleSelectLocation(id);
+    viewerPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const handleTimeTravel = () => {
@@ -291,9 +306,21 @@ function App() {
             <span className="badge">{locations.length} pontos</span>
           </div>
 
-          <div className="city-map" aria-label="Recorte estático de Itacoatiara no Amazonas com pontos de interesse">
+          <div
+            className="city-map"
+            aria-label="Recorte estático de Itacoatiara no Amazonas com pontos de interesse"
+            onClick={() => setMapPreviewId(null)}
+          >
             <div className="map-grid" />
             <div className="map-river" />
+            <div className="map-blocks" aria-hidden="true">
+              <i className="block block-one" />
+              <i className="block block-two" />
+              <i className="block block-three" />
+              <i className="block block-four" />
+              <i className="block block-five" />
+              <i className="block block-six" />
+            </div>
             <div className="map-road road-one" />
             <div className="map-road road-two" />
             <span className="map-city-label">ITACOATIARA</span>
@@ -304,17 +331,38 @@ function App() {
             {locations.map((location) => {
               const isSelected = location.id === selectedId;
               return (
-                <button
+                <div
                   key={location.id}
-                  type="button"
                   className={`map-marker ${isSelected ? 'selected' : ''}`}
                   style={{ left: `${location.coordinates.x}%`, top: `${location.coordinates.y}%` }}
-                  onClick={() => handleSelectLocation(location.id)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleMapSelect(location.id);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      handleMapSelect(location.id);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
                   aria-label={`Selecionar ${location.name}`}
                 >
                   <span className="marker-dot" />
                   <span className="marker-name">{location.name}<small>{location.coordinates.latitude.toFixed(6)}, {location.coordinates.longitude.toFixed(6)}</small></span>
-                </button>
+                  {mapPreviewId === location.id && (
+                    <span className="marker-preview" role="dialog" aria-label={`Prévia de ${location.name}`}>
+                      <img src={location.panoramas.current.imageUrl} alt={`Vista atual de ${location.name}`} />
+                      <span className="marker-preview-content">
+                        <strong>{location.name}</strong>
+                        <button type="button" className="preview-button" onClick={(event) => { event.stopPropagation(); handleViewLocation(location.id); }}>
+                          Ver
+                        </button>
+                      </span>
+                    </span>
+                  )}
+                </div>
               );
             })}
           </div>
@@ -371,7 +419,7 @@ function App() {
           </div>
         </section>
 
-        <section className="viewer-panel">
+        <section ref={viewerPanelRef} className="viewer-panel">
           <div className="viewer-toolbar">
             <div>
               <p className="eyebrow">Local atual</p>
