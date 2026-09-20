@@ -36,8 +36,7 @@ export const locations: LocationItem[] = [
       current: {
         year: 2026,
         label: 'Presente',
-        imageUrl:
-          'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1800&q=80'
+        imageUrl: '/historical/praca-matriz-2026.png'
       },
       historical: {
         year: 1970,
