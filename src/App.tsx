@@ -5,24 +5,33 @@ import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 import { locations, type Period } from './data/locations';
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+const DEFAULT_HORIZONTAL_FOV = 90;
+const MIN_HORIZONTAL_FOV = 70;
+const MAX_HORIZONTAL_FOV = 105;
+const HORIZONTAL_FOV_STEP = 5;
+
+const getVerticalFov = (horizontalFov: number, aspect: number) =>
+  THREE.MathUtils.radToDeg(
+    2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(horizontalFov) / 2) / aspect)
+  );
 
 type PanoramaViewerProps = {
   imageUrl: string;
-  fov: number;
+  horizontalFov: number;
   resetSignal: number;
-  onFovChange: (nextFov: number) => void;
+  onHorizontalFovChange: (nextFov: number) => void;
 };
 
 type DeviceOrientationEventWithPermission = typeof DeviceOrientationEvent & {
   requestPermission?: () => Promise<'granted' | 'denied'>;
 };
 
-function PanoramaViewer({ imageUrl, fov, resetSignal, onFovChange }: PanoramaViewerProps) {
+function PanoramaViewer({ imageUrl, horizontalFov, resetSignal, onHorizontalFovChange }: PanoramaViewerProps) {
   const stageRef = useRef<HTMLDivElement>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const materialRef = useRef<THREE.MeshBasicMaterial | null>(null);
-  const fovRef = useRef(fov);
+  const horizontalFovRef = useRef(horizontalFov);
   const [textureState, setTextureState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [motionEnabled, setMotionEnabled] = useState(false);
   const [motionMessage, setMotionMessage] = useState('');
@@ -32,7 +41,7 @@ function PanoramaViewer({ imageUrl, fov, resetSignal, onFovChange }: PanoramaVie
     if (!stage) return;
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(fov, 1, 0.1, 200);
+    const camera = new THREE.PerspectiveCamera(getVerticalFov(horizontalFov, 1), 1, 0.1, 200);
     camera.position.set(0, 0, 0.01);
     cameraRef.current = camera;
 
@@ -113,6 +122,7 @@ function PanoramaViewer({ imageUrl, fov, resetSignal, onFovChange }: PanoramaVie
       const height = stage.clientHeight;
       if (!width || !height) return;
       camera.aspect = width / height;
+      camera.fov = getVerticalFov(horizontalFovRef.current, camera.aspect);
       camera.updateProjectionMatrix();
       renderer.setSize(width, height, false);
     };
@@ -123,7 +133,13 @@ function PanoramaViewer({ imageUrl, fov, resetSignal, onFovChange }: PanoramaVie
 
     const handleWheel = (event: WheelEvent) => {
       event.preventDefault();
-      onFovChange(clamp(fovRef.current + (event.deltaY > 0 ? 6 : -6), 55, 105));
+      onHorizontalFovChange(
+        clamp(
+          horizontalFovRef.current + (event.deltaY > 0 ? HORIZONTAL_FOV_STEP : -HORIZONTAL_FOV_STEP),
+          MIN_HORIZONTAL_FOV,
+          MAX_HORIZONTAL_FOV
+        )
+      );
     };
     renderer.domElement.addEventListener('wheel', handleWheel, { passive: false });
 
@@ -151,12 +167,12 @@ function PanoramaViewer({ imageUrl, fov, resetSignal, onFovChange }: PanoramaVie
   }, []);
 
   useEffect(() => {
-    fovRef.current = fov;
+    horizontalFovRef.current = horizontalFov;
     const camera = cameraRef.current;
     if (!camera) return;
-    camera.fov = fov;
+    camera.fov = getVerticalFov(horizontalFov, camera.aspect);
     camera.updateProjectionMatrix();
-  }, [fov]);
+  }, [horizontalFov]);
 
   useEffect(() => {
     controlsRef.current?.reset();
@@ -223,9 +239,10 @@ function PanoramaViewer({ imageUrl, fov, resetSignal, onFovChange }: PanoramaVie
 function App() {
   const [selectedId, setSelectedId] = useState(locations[0].id);
   const [period, setPeriod] = useState<Period>('current');
-  const [fov, setFov] = useState(100);
+  const [horizontalFov, setHorizontalFov] = useState(DEFAULT_HORIZONTAL_FOV);
   const [resetSignal, setResetSignal] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [transitionYear, setTransitionYear] = useState<number | null>(null);
   const [mapPreviewId, setMapPreviewId] = useState<string | null>(null);
   const viewerPanelRef = useRef<HTMLElement>(null);
 
@@ -238,7 +255,7 @@ function App() {
 
   const handleSelectLocation = (id: string) => {
     setSelectedId(id);
-    setFov(100);
+    setHorizontalFov(DEFAULT_HORIZONTAL_FOV);
     setResetSignal((signal) => signal + 1);
     setPeriod('current');
     setIsTransitioning(false);
@@ -258,6 +275,7 @@ function App() {
     if (isTransitioning) return;
 
     const nextPeriod: Period = period === 'current' ? 'historical' : 'current';
+    setTransitionYear(selectedLocation.panoramas[nextPeriod].year);
     setIsTransitioning(true);
 
     window.setTimeout(() => {
@@ -438,9 +456,9 @@ function App() {
           <div className={`panorama-stage ${isTransitioning ? 'transitioning' : ''}`}>
             <PanoramaViewer
               imageUrl={activePanorama.imageUrl}
-              fov={fov}
+              horizontalFov={horizontalFov}
               resetSignal={resetSignal}
-              onFovChange={setFov}
+              onHorizontalFovChange={setHorizontalFov}
             />
 
             <div className="viewer-overlay" aria-live="polite">
@@ -451,7 +469,7 @@ function App() {
             {isTransitioning && (
               <div className="time-transition">
                 <div className="portal-shell">
-                  <span>{period === 'current' ? '1970' : '2026'}</span>
+                  <span>{transitionYear}</span>
                 </div>
               </div>
             )}
