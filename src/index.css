@@ -1231,7 +1231,7 @@ select {
 }
 
 .panorama-stage {
-  min-height: 450px;
+  min-height: 600px;
   border: 1px solid #263f37;
   border-radius: 2px;
   background: #101916;
@@ -1466,7 +1466,7 @@ select {
   }
 
   .panorama-stage {
-    min-height: 320px;
+    min-height: 420px;
   }
 
   .tutorial-card {
