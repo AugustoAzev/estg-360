@@ -9,6 +9,8 @@ const DEFAULT_HORIZONTAL_FOV = 90;
 const MIN_HORIZONTAL_FOV = 70;
 const MAX_HORIZONTAL_FOV = 105;
 const HORIZONTAL_FOV_STEP = 5;
+const MIN_VERTICAL_POLAR_ANGLE = THREE.MathUtils.degToRad(45);
+const MAX_VERTICAL_POLAR_ANGLE = Math.PI - MIN_VERTICAL_POLAR_ANGLE;
 
 const getVerticalFov = (horizontalFov: number, aspect: number) =>
   THREE.MathUtils.radToDeg(
@@ -62,8 +64,8 @@ function PanoramaViewer({ imageUrl, horizontalFov, resetSignal, onHorizontalFovC
     controls.enableDamping = true;
     controls.enableZoom = false;
     controls.rotateSpeed = -0.25;
-    controls.minPolarAngle = 0.35;
-    controls.maxPolarAngle = Math.PI - 0.35;
+    controls.minPolarAngle = MIN_VERTICAL_POLAR_ANGLE;
+    controls.maxPolarAngle = MAX_VERTICAL_POLAR_ANGLE;
     controls.target.set(0, 0, -1);
     controls.update();
     controls.saveState();
