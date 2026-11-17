@@ -3,14 +3,14 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 import { locations, type Period } from './data/locations';
+import CityMap from './CityMap';
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
-const DEFAULT_HORIZONTAL_FOV = 90;
+const DEFAULT_HORIZONTAL_FOV = 75;
 const MIN_HORIZONTAL_FOV = 70;
 const MAX_HORIZONTAL_FOV = 105;
 const HORIZONTAL_FOV_STEP = 5;
-const MIN_VERTICAL_POLAR_ANGLE = THREE.MathUtils.degToRad(45);
-const MAX_VERTICAL_POLAR_ANGLE = Math.PI - MIN_VERTICAL_POLAR_ANGLE;
+const FIXED_POLAR_ANGLE = Math.PI / 2;
 
 const getVerticalFov = (horizontalFov: number, aspect: number) =>
   THREE.MathUtils.radToDeg(
@@ -77,8 +77,8 @@ function PanoramaViewer({ imageUrl, horizontalFov, resetSignal, onHorizontalFovC
     controls.enableDamping = true;
     controls.enableZoom = false;
     controls.rotateSpeed = -0.25;
-    controls.minPolarAngle = MIN_VERTICAL_POLAR_ANGLE;
-    controls.maxPolarAngle = MAX_VERTICAL_POLAR_ANGLE;
+    controls.minPolarAngle = FIXED_POLAR_ANGLE;
+    controls.maxPolarAngle = FIXED_POLAR_ANGLE;
     controls.target.set(0, 0, -1);
     controls.update();
     controls.saveState();
@@ -100,7 +100,11 @@ function PanoramaViewer({ imageUrl, horizontalFov, resetSignal, onHorizontalFovC
       orientationQuaternion.setFromEuler(orientationEuler);
       orientationQuaternion.multiply(new THREE.Quaternion().setFromAxisAngle(zee, -Math.PI / 2));
       screenQuaternion.setFromAxisAngle(zee, -screenOrientation());
-      camera.quaternion.copy(orientationQuaternion).multiply(screenQuaternion);
+      orientationQuaternion.multiply(screenQuaternion);
+      orientationEuler.setFromQuaternion(orientationQuaternion, 'YXZ');
+      orientationEuler.x = 0;
+      orientationEuler.z = 0;
+      camera.quaternion.setFromEuler(orientationEuler);
     };
 
     const activateMotion = async () => {
@@ -263,7 +267,6 @@ function App() {
   const [resetSignal, setResetSignal] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [transitionLabel, setTransitionLabel] = useState<string | null>(null);
-  const [mapPreviewId, setMapPreviewId] = useState<string | null>(null);
   const viewerPanelRef = useRef<HTMLElement>(null);
 
   const selectedLocation = useMemo(
@@ -279,11 +282,6 @@ function App() {
     setResetSignal((signal) => signal + 1);
     setPeriod('current');
     setIsTransitioning(false);
-  };
-
-  const handleMapSelect = (id: string) => {
-    handleSelectLocation(id);
-    setMapPreviewId(id);
   };
 
   const handleViewLocation = (id: string) => {
@@ -339,72 +337,18 @@ function App() {
         <section className="map-panel">
           <div className="map-header">
             <div>
-              <p className="eyebrow">Recorte estático da cidade</p>
+              <p className="eyebrow">Mapa interativo</p>
               <h2>Itacoatiara, Amazonas</h2>
             </div>
             <span className="badge">{locations.length} pontos</span>
           </div>
 
-          <div
-            className="city-map"
-            aria-label="Recorte estático de Itacoatiara no Amazonas com pontos de interesse"
-            onClick={() => setMapPreviewId(null)}
-          >
-            <div className="map-grid" />
-            <div className="map-river" />
-            <div className="map-blocks" aria-hidden="true">
-              <i className="block block-one" />
-              <i className="block block-two" />
-              <i className="block block-three" />
-              <i className="block block-four" />
-              <i className="block block-five" />
-              <i className="block block-six" />
-            </div>
-            <div className="map-road road-one" />
-            <div className="map-road road-two" />
-            <span className="map-city-label">ITACOATIARA</span>
-            <span className="map-state-label">AMAZONAS · BRASIL</span>
-            <span className="map-north">N</span>
-            <span className="map-scale">0&nbsp;&nbsp;&nbsp;&nbsp;250 m</span>
-
-            {locations.map((location) => {
-              const isSelected = location.id === selectedId;
-              return (
-                <div
-                  key={location.id}
-                  className={`map-marker ${isSelected ? 'selected' : ''}`}
-                  style={{ left: `${location.coordinates.x}%`, top: `${location.coordinates.y}%` }}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    handleMapSelect(location.id);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      handleMapSelect(location.id);
-                    }
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`Selecionar ${location.name}`}
-                >
-                  <span className="marker-dot" />
-                  <span className="marker-name">{location.name}<small>{location.coordinates.latitude.toFixed(6)}, {location.coordinates.longitude.toFixed(6)}</small></span>
-                  {mapPreviewId === location.id && (
-                    <span className="marker-preview" role="dialog" aria-label={`Prévia de ${location.name}`}>
-                      <img src={location.panoramas.current.imageUrl} alt={`Vista atual de ${location.name}`} />
-                      <span className="marker-preview-content">
-                        <strong>{location.name}</strong>
-                        <button type="button" className="preview-button" onClick={(event) => { event.stopPropagation(); handleViewLocation(location.id); }}>
-                          Ver
-                        </button>
-                      </span>
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <CityMap
+            locations={locations}
+            selectedId={selectedId}
+            onSelect={handleSelectLocation}
+            onView={handleViewLocation}
+          />
         </section>
 
         <section className="tutorial-panel">

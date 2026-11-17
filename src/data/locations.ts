@@ -10,7 +10,7 @@ export type LocationItem = {
   id: string;
   name: string;
   description: string;
-  coordinates: { x: number; y: number; latitude: number; longitude: number };
+  coordinates: { latitude: number; longitude: number };
   city: string;
   source: {
     title: string;
@@ -26,7 +26,7 @@ export const locations: LocationItem[] = [
     name: 'Praça da Matriz',
     description: 'Praça histórica no centro de Itacoatiara, em frente à igreja matriz.',
     city: 'Itacoatiara-AM',
-    coordinates: { x: 31, y: 48, latitude: -3.147496, longitude: -58.448921 },
+    coordinates: { latitude: -3.147312, longitude: -58.446137 },
     source: {
       title: 'Fotografia histórica da Praça da Matriz na década de 1970',
       confidence: 'Alta',
@@ -50,7 +50,7 @@ export const locations: LocationItem[] = [
     name: 'Mercado Municipal',
     description: 'Mercado e seu entorno no centro de Itacoatiara.',
     city: 'Itacoatiara-AM',
-    coordinates: { x: 69, y: 59, latitude: -3.147898, longitude: -58.446113 },
+    coordinates: { latitude: -3.146849, longitude: -58.449512 },
     source: {
       title: 'Imagem antiga provisória do Mercado Municipal',
       confidence: 'Baixa',
@@ -71,10 +71,10 @@ export const locations: LocationItem[] = [
   },
   {
     id: 'centro',
-    name: 'Centro',
+    name: 'Centro da Cidade',
     description: 'Área central de Itacoatiara.',
     city: 'Itacoatiara-AM',
-    coordinates: { x: 50, y: 77, latitude: -3.1477, longitude: -58.4475 },
+    coordinates: { latitude: -3.148003, longitude: -58.446431 },
     source: {
       title: 'Imagem antiga provisória do Centro',
       confidence: 'Baixa',
