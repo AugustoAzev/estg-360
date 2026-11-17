@@ -17,6 +17,18 @@ const getVerticalFov = (horizontalFov: number, aspect: number) =>
     2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(horizontalFov) / 2) / aspect)
   );
 
+const PANORAMA_RADIUS = 500;
+
+const createPanoramaGeometry = (imageAspectRatio = 2) =>
+  new THREE.CylinderGeometry(
+    PANORAMA_RADIUS,
+    PANORAMA_RADIUS,
+    (Math.PI * 2 * PANORAMA_RADIUS) / imageAspectRatio,
+    192,
+    1,
+    true
+  );
+
 type PanoramaViewerProps = {
   imageUrl: string;
   horizontalFov: number;
@@ -32,6 +44,7 @@ function PanoramaViewer({ imageUrl, horizontalFov, resetSignal, onHorizontalFovC
   const stageRef = useRef<HTMLDivElement>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
+  const panoramaRef = useRef<THREE.Mesh | null>(null);
   const materialRef = useRef<THREE.MeshBasicMaterial | null>(null);
   const horizontalFovRef = useRef(horizontalFov);
   const [textureState, setTextureState] = useState<'loading' | 'ready' | 'error'>('loading');
@@ -43,7 +56,7 @@ function PanoramaViewer({ imageUrl, horizontalFov, resetSignal, onHorizontalFovC
     if (!stage) return;
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(getVerticalFov(horizontalFov, 1), 1, 0.1, 200);
+    const camera = new THREE.PerspectiveCamera(getVerticalFov(horizontalFov, 1), 1, 0.1, PANORAMA_RADIUS * 4);
     camera.position.set(0, 0, 0.01);
     cameraRef.current = camera;
 
@@ -116,8 +129,9 @@ function PanoramaViewer({ imageUrl, horizontalFov, resetSignal, onHorizontalFovC
 
     const material = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.BackSide });
     materialRef.current = material;
-    const panorama = new THREE.Mesh(new THREE.SphereGeometry(100, 64, 40), material);
+    const panorama = new THREE.Mesh(createPanoramaGeometry(), material);
     scene.add(panorama);
+    panoramaRef.current = panorama;
 
     const resize = () => {
       const width = stage.clientWidth;
@@ -164,6 +178,7 @@ function PanoramaViewer({ imageUrl, horizontalFov, resetSignal, onHorizontalFovC
       renderer.domElement.remove();
       cameraRef.current = null;
       controlsRef.current = null;
+      panoramaRef.current = null;
       materialRef.current = null;
     };
   }, []);
@@ -182,7 +197,8 @@ function PanoramaViewer({ imageUrl, horizontalFov, resetSignal, onHorizontalFovC
 
   useEffect(() => {
     const material = materialRef.current;
-    if (!material) return;
+    const panorama = panoramaRef.current;
+    if (!material || !panorama) return;
 
     let cancelled = false;
     const loader = new THREE.TextureLoader();
@@ -200,6 +216,8 @@ function PanoramaViewer({ imageUrl, horizontalFov, resetSignal, onHorizontalFovC
         texture.wrapS = THREE.RepeatWrapping;
         texture.repeat.x = -1;
         texture.offset.x = 1;
+        panorama.geometry.dispose();
+        panorama.geometry = createPanoramaGeometry(texture.image.width / texture.image.height);
         material.map?.dispose();
         material.map = texture;
         material.needsUpdate = true;
@@ -244,7 +262,7 @@ function App() {
   const [horizontalFov, setHorizontalFov] = useState(DEFAULT_HORIZONTAL_FOV);
   const [resetSignal, setResetSignal] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [transitionYear, setTransitionYear] = useState<number | null>(null);
+  const [transitionLabel, setTransitionLabel] = useState<string | null>(null);
   const [mapPreviewId, setMapPreviewId] = useState<string | null>(null);
   const viewerPanelRef = useRef<HTMLElement>(null);
 
@@ -277,7 +295,8 @@ function App() {
     if (isTransitioning) return;
 
     const nextPeriod: Period = period === 'current' ? 'historical' : 'current';
-    setTransitionYear(selectedLocation.panoramas[nextPeriod].year);
+    const nextPanorama = selectedLocation.panoramas[nextPeriod];
+    setTransitionLabel(nextPanorama.year === null ? nextPanorama.label : String(nextPanorama.year));
     setIsTransitioning(true);
 
     window.setTimeout(() => {
@@ -450,7 +469,11 @@ function App() {
                 Resetar visão
               </button>
               <button type="button" className="primary-button" onClick={handleTimeTravel}>
-                {period === 'current' ? 'Voltar no tempo — 1970' : 'Retornar ao presente'}
+                {period === 'current'
+                  ? selectedLocation.panoramas.historical.year === null
+                    ? 'Ver imagem antiga'
+                    : `Voltar no tempo — ${selectedLocation.panoramas.historical.year}`
+                  : 'Retornar ao presente'}
               </button>
             </div>
           </div>
@@ -464,14 +487,14 @@ function App() {
             />
 
             <div className="viewer-overlay" aria-live="polite">
-              <span className="year-pill">{activePanorama.year}</span>
+              <span className="year-pill">{activePanorama.year ?? activePanorama.label}</span>
               <span className="view-mode">{period === 'current' ? 'Presente' : 'Histórico'}</span>
             </div>
 
             {isTransitioning && (
               <div className="time-transition">
                 <div className="portal-shell">
-                  <span>{transitionYear}</span>
+                  <span>{transitionLabel}</span>
                 </div>
               </div>
             )}
