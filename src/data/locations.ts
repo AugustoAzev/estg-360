@@ -1,7 +1,7 @@
 export type Period = 'current' | 'historical';
 
 export type PanoramaItem = {
-  year: number;
+  year: number | null;
   imageUrl: string;
   label: string;
 };
@@ -36,7 +36,7 @@ export const locations: LocationItem[] = [
       current: {
         year: 2026,
         label: 'Presente',
-        imageUrl: '/historical/praca-matriz-2026.png'
+        imageUrl: '/historical/igreja-360-2026.jpg'
       },
       historical: {
         year: 1970,
@@ -46,27 +46,50 @@ export const locations: LocationItem[] = [
     }
   },
   {
-    id: 'praca-do-relogio',
-    name: 'Praça do Relógio',
-    description: 'Praça histórica e ponto de referência no centro de Itacoatiara.',
+    id: 'mercado-municipal',
+    name: 'Mercado Municipal',
+    description: 'Mercado e seu entorno no centro de Itacoatiara.',
     city: 'Itacoatiara-AM',
     coordinates: { x: 69, y: 59, latitude: -3.147898, longitude: -58.446113 },
     source: {
-      title: 'Fotografia histórica da Praça do Relógio na década de 1970',
-      confidence: 'Alta',
-      note: 'Imagem histórica processada a partir do arquivo fotográfico original.'
+      title: 'Imagem antiga provisória do Mercado Municipal',
+      confidence: 'Baixa',
+      note: 'Imagem de referência sem data confirmada, a ser substituída por um registro histórico validado.'
     },
     panoramas: {
       current: {
         year: 2026,
         label: 'Presente',
-        imageUrl:
-          'https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1800&q=80'
+        imageUrl: '/historical/mercado-360-2026.jpg'
       },
       historical: {
-        year: 1970,
-        label: 'Década de 1970',
-        imageUrl: '/historical/praca-do-relogio-anos-70.png'
+        year: null,
+        label: 'Antiga (provisória)',
+        imageUrl: '/historical/mercado-antigo.jpg'
+      }
+    }
+  },
+  {
+    id: 'centro',
+    name: 'Centro',
+    description: 'Área central de Itacoatiara.',
+    city: 'Itacoatiara-AM',
+    coordinates: { x: 50, y: 77, latitude: -3.1477, longitude: -58.4475 },
+    source: {
+      title: 'Imagem antiga provisória do Centro',
+      confidence: 'Baixa',
+      note: 'Imagem de referência sem data confirmada; coordenadas aproximadas no mapa ilustrativo.'
+    },
+    panoramas: {
+      current: {
+        year: 2026,
+        label: 'Presente',
+        imageUrl: '/historical/centro-360-2026.jpg'
+      },
+      historical: {
+        year: null,
+        label: 'Antiga (provisória)',
+        imageUrl: '/historical/centro-antigo.jpeg'
       }
     }
   }
