@@ -4,6 +4,11 @@ export type PanoramaItem = {
   year: number | null;
   imageUrl: string;
   label: string;
+  attribution?: {
+    label: string;
+    url: string;
+  };
+  aiDisclosure?: string;
 };
 
 export type LocationItem = {
@@ -19,6 +24,14 @@ export type LocationItem = {
   };
   panoramas: Record<Period, PanoramaItem>;
 };
+
+const historicalImageAttribution = {
+  label: 'Craviano Fotografia (Facebook)',
+  url: 'https://www.facebook.com/profile.php?id=100079856954732'
+};
+
+const historicalImageAiDisclosure =
+  'Imagem histórica ampliada por outpainting e aprimorada com IA.';
 
 export const locations: LocationItem[] = [
   {
@@ -41,7 +54,9 @@ export const locations: LocationItem[] = [
       historical: {
         year: 1970,
         label: 'Década de 1970',
-        imageUrl: '/historical/praca-matriz-anos-70.png'
+        imageUrl: '/historical/praca-matriz-anos-70.png',
+        attribution: historicalImageAttribution,
+        aiDisclosure: historicalImageAiDisclosure
       }
     }
   },
@@ -52,9 +67,9 @@ export const locations: LocationItem[] = [
     city: 'Itacoatiara-AM',
     coordinates: { latitude: -3.146849, longitude: -58.449512 },
     source: {
-      title: 'Imagem antiga provisória do Mercado Municipal',
-      confidence: 'Baixa',
-      note: 'Imagem de referência sem data confirmada, a ser substituída por um registro histórico validado.'
+      title: 'Imagem histórica do Mercado Municipal',
+      confidence: 'Média',
+      note: 'Panorama histórico do Mercado Municipal e de seu entorno.'
     },
     panoramas: {
       current: {
@@ -64,8 +79,10 @@ export const locations: LocationItem[] = [
       },
       historical: {
         year: null,
-        label: 'Antiga (provisória)',
-        imageUrl: '/historical/mercado-antigo.jpg'
+        label: 'Antiga',
+        imageUrl: '/historical/mercado-antigo.jpg',
+        attribution: historicalImageAttribution,
+        aiDisclosure: historicalImageAiDisclosure
       }
     }
   },
@@ -76,9 +93,9 @@ export const locations: LocationItem[] = [
     city: 'Itacoatiara-AM',
     coordinates: { latitude: -3.148003, longitude: -58.446431 },
     source: {
-      title: 'Imagem antiga provisória do Centro',
-      confidence: 'Baixa',
-      note: 'Imagem de referência sem data confirmada; coordenadas aproximadas no mapa ilustrativo.'
+      title: 'Imagem histórica do Centro da Cidade',
+      confidence: 'Média',
+      note: 'Panorama histórico da área central de Itacoatiara.'
     },
     panoramas: {
       current: {
@@ -88,8 +105,10 @@ export const locations: LocationItem[] = [
       },
       historical: {
         year: null,
-        label: 'Antiga (provisória)',
-        imageUrl: '/historical/centro-antigo.jpeg'
+        label: 'Antiga',
+        imageUrl: '/historical/centro-antigo.jpeg',
+        attribution: historicalImageAttribution,
+        aiDisclosure: historicalImageAiDisclosure
       }
     }
   }
