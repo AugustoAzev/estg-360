@@ -7,6 +7,7 @@ import CityMap from './CityMap';
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 const DEFAULT_HORIZONTAL_FOV = 75;
+const HISTORICAL_HORIZONTAL_FOV = 100;
 const MIN_HORIZONTAL_FOV = 70;
 const MAX_HORIZONTAL_FOV = 105;
 const HORIZONTAL_FOV_STEP = 5;
@@ -268,6 +269,7 @@ function App() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [transitionLabel, setTransitionLabel] = useState<string | null>(null);
   const viewerPanelRef = useRef<HTMLElement>(null);
+  const purposeDialogRef = useRef<HTMLDialogElement>(null);
 
   const selectedLocation = useMemo(
     () => locations.find((location) => location.id === selectedId) ?? locations[0],
@@ -299,6 +301,9 @@ function App() {
 
     window.setTimeout(() => {
       setPeriod(nextPeriod);
+      setHorizontalFov(
+        nextPeriod === 'historical' ? HISTORICAL_HORIZONTAL_FOV : DEFAULT_HORIZONTAL_FOV
+      );
     }, 700);
 
     window.setTimeout(() => {
@@ -445,15 +450,93 @@ function App() {
           </div>
 
           <div className="source-panel">
-            <div>
-              <p className="eyebrow">Confiabilidade histórica</p>
-              <h4>{selectedLocation.source.confidence}</h4>
-            </div>
-            <p>{selectedLocation.source.title}</p>
-            <small>{selectedLocation.source.note}</small>
+            {period === 'current' ? (
+              <>
+                <div>
+                  <p className="eyebrow">Período da imagem</p>
+                  <h4>Atual — 2026</h4>
+                </div>
+                <p>Panorama do local no período atual, não uma imagem histórica.</p>
+              </>
+            ) : (
+              <>
+                <div>
+                  <p className="eyebrow">Confiabilidade histórica</p>
+                  <h4>{selectedLocation.source.confidence}</h4>
+                </div>
+                <p>{selectedLocation.source.title}</p>
+                <small>{selectedLocation.source.note}</small>
+                {activePanorama.attribution && (
+                  <small>
+                    Fonte:{' '}
+                    <a
+                      href={activePanorama.attribution.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {activePanorama.attribution.label}
+                    </a>
+                  </small>
+                )}
+                {activePanorama.aiDisclosure && <small>{activePanorama.aiDisclosure}</small>}
+              </>
+            )}
           </div>
         </section>
       </main>
+
+      <footer className="app-footer">
+        <a
+          className="purpose-link"
+          href="#purpose-dialog"
+          onClick={(event) => {
+            event.preventDefault();
+            const dialog = purposeDialogRef.current;
+            if (dialog && !dialog.open) dialog.showModal();
+          }}
+        >
+          Finalidade do trabalho
+        </a>
+      </footer>
+
+      <dialog
+        id="purpose-dialog"
+        ref={purposeDialogRef}
+        className="purpose-dialog"
+        aria-labelledby="purpose-dialog-title"
+        aria-describedby="purpose-dialog-description"
+        onClick={(event) => {
+          if (event.target === event.currentTarget) event.currentTarget.close();
+        }}
+      >
+        <button
+          type="button"
+          className="purpose-dialog-close"
+          autoFocus
+          onClick={() => purposeDialogRef.current?.close()}
+        >
+          Fechar
+        </button>
+        <p className="eyebrow">Sobre o projeto</p>
+        <h2 id="purpose-dialog-title">Finalidade do trabalho</h2>
+        <p id="purpose-dialog-description">
+          Este trabalho tem como finalidade desenvolver uma aplicação web interativa que permita
+          conhecer e explorar locais de Itacoatiara-AM por meio de panoramas em 360°, aproximando
+          o público da história e da memória da cidade ao possibilitar a visualização de imagens
+          atuais e históricas.
+        </p>
+        <h3>Envolvidos</h3>
+        <ul className="purpose-participants">
+          <li>
+            <strong>Bruno Augusto Azevedo Souza</strong>
+            <span>Estagiário</span>
+          </li>
+          <li>
+            <strong>Luciele Inhape Menezes</strong>
+            <span>Estagiária</span>
+          </li>
+        </ul>
+      </dialog>
     </div>
   );
 }

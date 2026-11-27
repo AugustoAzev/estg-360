@@ -693,6 +693,17 @@ button {
   line-height: 1.5;
 }
 
+.source-panel a {
+  color: #284737;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.source-panel a:hover,
+.source-panel a:focus-visible {
+  color: #d97849;
+}
+
 @keyframes fadeOverlay {
   0% {
     opacity: 0;
@@ -1288,5 +1299,106 @@ select {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+.app-footer {
+  grid-column: 1 / -1;
+  padding: 14px 4px 2px;
+  border-top: 1px solid rgba(223, 218, 197, 0.16);
+}
+
+.purpose-link {
+  color: #d97849;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-underline-offset: 0.2em;
+}
+
+.purpose-link:hover,
+.purpose-link:focus-visible {
+  color: #f2c66e;
+}
+
+.purpose-dialog {
+  width: min(540px, calc(100vw - 32px));
+  max-height: min(80vh, 680px);
+  overflow: auto;
+  margin: auto;
+  padding: 28px;
+  border: 1px solid #d97849;
+  border-radius: 3px;
+  background: #e6e2d1;
+  box-shadow: 0 24px 80px rgba(1, 10, 20, 0.55);
+  color: #284737;
+}
+
+.purpose-dialog::backdrop {
+  background: rgba(5, 12, 10, 0.72);
+  backdrop-filter: blur(4px);
+}
+
+.purpose-dialog h2,
+.purpose-dialog h3 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 500;
+}
+
+.purpose-dialog h2 {
+  margin: 0 0 14px;
+  font-size: 1.65rem;
+}
+
+.purpose-dialog h3 {
+  margin: 22px 0 10px;
+}
+
+.purpose-dialog > p:not(.eyebrow) {
+  margin: 0;
+  line-height: 1.7;
+}
+
+.purpose-dialog-close {
+  float: right;
+  padding: 7px 10px;
+  border: 1px solid rgba(40, 71, 55, 0.35);
+  background: transparent;
+  color: #284737;
+}
+
+.purpose-dialog-close:hover,
+.purpose-dialog-close:focus-visible {
+  background: rgba(40, 71, 55, 0.1);
+}
+
+.purpose-participants {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.purpose-participants li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+  padding: 12px;
+  border-left: 3px solid #d97849;
+  background: rgba(40, 71, 55, 0.06);
+}
+
+.purpose-participants span {
+  color: #52645a;
+}
+
+@media (max-width: 560px) {
+  .purpose-dialog {
+    padding: 22px 18px;
+  }
+
+  .purpose-dialog h2 {
+    font-size: 1.4rem;
   }
 }
